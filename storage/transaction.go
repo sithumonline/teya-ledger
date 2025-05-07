@@ -6,6 +6,8 @@ import (
 )
 
 func (m *MemoryStorage) CreateDeposit(transaction *Transaction) (*Transaction, error) {
+	m.transactionsLock.Lock()
+	defer m.transactionsLock.Unlock()
 	// Ideally should be handled by a unique constraint
 	for _, transactionData := range m.transactions {
 		if transactionData.TransactionID == transaction.TransactionID {
@@ -22,7 +24,9 @@ func (m *MemoryStorage) CreateDeposit(transaction *Transaction) (*Transaction, e
 	return transaction, nil
 }
 
-func (m *MemoryStorage) GetTransactions(userID, accountNumber string, limit, page int) ([]*Transaction, error) {
+func (m *MemoryStorage) GetTransactions(userID, accountNumber string, limit, _ int) ([]*Transaction, error) {
+	m.transactionsLock.RLock()
+	defer m.transactionsLock.RUnlock()
 	if limit <= 0 {
 		limit = 10
 	}
@@ -40,6 +44,8 @@ func (m *MemoryStorage) GetTransactions(userID, accountNumber string, limit, pag
 
 // CreateTransaction creates a new transaction
 func (m *MemoryStorage) CreateTransaction(transaction *Transaction) error {
+	m.transactionsLock.Lock()
+	defer m.transactionsLock.Unlock()
 	// Ideally should be handled by a unique constraint
 	for _, transactionData := range m.transactions {
 		if transactionData.ID == transaction.ID {
@@ -57,6 +63,8 @@ func (m *MemoryStorage) CreateTransaction(transaction *Transaction) error {
 }
 
 func (m *MemoryStorage) CreateWithdrawal(transaction *Transaction) (*Transaction, error) {
+	m.transactionsLock.Lock()
+	defer m.transactionsLock.Unlock()
 	// Ideally should be handled by a unique constraint
 	for _, transactionData := range m.transactions {
 		if transactionData.TransactionID == transaction.TransactionID {
@@ -74,6 +82,8 @@ func (m *MemoryStorage) CreateWithdrawal(transaction *Transaction) (*Transaction
 }
 
 func (m *MemoryStorage) GetTransaction(userID, transactionID string) (*Transaction, error) {
+	m.transactionsLock.RLock()
+	defer m.transactionsLock.RUnlock()
 	for _, transaction := range m.transactions {
 		if transaction.UserID == userID && transaction.TransactionID == transactionID {
 			return transaction, nil
@@ -83,6 +93,8 @@ func (m *MemoryStorage) GetTransaction(userID, transactionID string) (*Transacti
 }
 
 func (m *MemoryStorage) UpdateTransaction(transactionID string, status string) error {
+	m.transactionsLock.Lock()
+	defer m.transactionsLock.Unlock()
 	for _, transaction := range m.transactions {
 		if transaction.TransactionID == transactionID {
 			transaction.Status = status

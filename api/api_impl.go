@@ -2,6 +2,7 @@ package api
 
 import (
 	"fmt"
+	"log/slog"
 	"net/http"
 	"path"
 	"strconv"
@@ -13,16 +14,16 @@ import (
 func (a *APIImpl) setupRoutes() {
 	a.mux = http.NewServeMux()
 
-	a.mux.Handle("POST /api/v1/deposits", AuthMiddleware(http.HandlerFunc(a.createDeposit)))
-	a.mux.Handle("POST /api/v1/withdrawals", AuthMiddleware(http.HandlerFunc(a.createWithdrawal)))
-	a.mux.Handle("GET /api/v1/balances", AuthMiddleware(http.HandlerFunc(a.getBalance)))
-	a.mux.Handle("GET /api/v1/transactions", AuthMiddleware(http.HandlerFunc(a.getTransactions)))
-	a.mux.Handle("GET /api/v1/transactions/{transactionID}", AuthMiddleware(http.HandlerFunc(a.getTransaction)))
+	a.mux.Handle("POST /api/v1/deposits", AuthMiddleware(RequestIDMiddleware(http.HandlerFunc(a.createDeposit))))
+	a.mux.Handle("POST /api/v1/withdrawals", AuthMiddleware(RequestIDMiddleware(http.HandlerFunc(a.createWithdrawal))))
+	a.mux.Handle("GET /api/v1/balances", AuthMiddleware(RequestIDMiddleware(http.HandlerFunc(a.getBalance))))
+	a.mux.Handle("GET /api/v1/transactions", AuthMiddleware(RequestIDMiddleware(http.HandlerFunc(a.getTransactions))))
+	a.mux.Handle("GET /api/v1/transactions/{transactionID}", AuthMiddleware(RequestIDMiddleware(http.HandlerFunc(a.getTransaction))))
 }
 
 func (a *APIImpl) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	a.setupRoutes()
-	fmt.Printf("Request received: %s %s\n", r.Method, r.URL.Path)
+	a.l.InfoContext(r.Context(), "Request received", slog.String("method", r.Method), slog.String("path", r.URL.Path))
 	a.mux.ServeHTTP(w, r)
 }
 
@@ -202,7 +203,7 @@ func (a *APIImpl) getTransaction(w http.ResponseWriter, r *http.Request) {
 		a.respondError(w, http.StatusBadRequest, err, fmt.Sprintf("Failed to get transaction: %+v", err))
 		return
 	}
-	fmt.Printf("etransaction get: %+v\n", transaction)
+	a.l.InfoContext(r.Context(), "Request received", slog.String("transaction", fmt.Sprintf("%+v", transaction)))
 
 	result := GetTransactionResponse{
 		Transaction: Transaction{

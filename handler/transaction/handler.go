@@ -27,7 +27,7 @@ func New(storage storage.Storage) *TransactionHandler {
 	}
 }
 
-func (t TransactionHandler) CreateDeposit(userID string, req CreateDepositRequest) (*CreateDepositResponse, error) {
+func (t *TransactionHandler) CreateDeposit(userID string, req CreateDepositRequest) (*CreateDepositResponse, error) {
 	if _, err := t.storage.GetAccount(userID, req.AccountNumber); err != nil {
 		return nil, types.NewNotFound(err.Error())
 	}
@@ -64,7 +64,7 @@ func (t TransactionHandler) CreateDeposit(userID string, req CreateDepositReques
 	}}, nil
 }
 
-func (t TransactionHandler) GetTransactions(userID string, req GetTransactionsRequest) (*GetTransactionsResponse, error) {
+func (t *TransactionHandler) GetTransactions(userID string, req GetTransactionsRequest) (*GetTransactionsResponse, error) {
 	transactionsData, err := t.storage.GetTransactions(userID, req.AccountNumber, req.Limit, req.Page)
 	if err != nil {
 		return nil, err
@@ -86,7 +86,7 @@ func (t TransactionHandler) GetTransactions(userID string, req GetTransactionsRe
 	return &GetTransactionsResponse{Transactions: transactions}, nil
 }
 
-func (t TransactionHandler) CreateWithdrawal(userID string, req CreateWithdrawalRequest) (*CreateWithdrawalResponse, error) {
+func (t *TransactionHandler) CreateWithdrawal(userID string, req CreateWithdrawalRequest) (*CreateWithdrawalResponse, error) {
 	if _, err := t.storage.GetAccount(userID, req.AccountNumber); err != nil {
 		return nil, types.NewNotFound(err.Error())
 	}
@@ -131,14 +131,14 @@ func (t TransactionHandler) CreateWithdrawal(userID string, req CreateWithdrawal
 }
 
 // GetBalance retrieves the current balance for an account
-func (h *TransactionHandler) GetBalance(userID string, req GetBalanceRequest) (*GetBalanceResponse, error) {
+func (t *TransactionHandler) GetBalance(userID string, req GetBalanceRequest) (*GetBalanceResponse, error) {
 	// Validate that the account belongs to the user
-	if _, err := h.storage.GetAccount(userID, req.AccountNumber); err != nil {
+	if _, err := t.storage.GetAccount(userID, req.AccountNumber); err != nil {
 		return nil, types.NewNotFound(err.Error())
 	}
 
 	// Get balance directly from storage
-	balance, err := h.storage.GetBalance(userID, req.AccountNumber)
+	balance, err := t.storage.GetBalance(userID, req.AccountNumber)
 	if err != nil {
 		return nil, types.NewBadRequest(types.BadRequest, err.Error())
 	}
@@ -150,7 +150,7 @@ func (h *TransactionHandler) GetBalance(userID string, req GetBalanceRequest) (*
 }
 
 // GetTransaction retrieves the current status of a transaction
-func (t TransactionHandler) GetTransaction(userID string, transactionID string) (*Transaction, error) {
+func (t *TransactionHandler) GetTransaction(userID string, transactionID string) (*Transaction, error) {
 	transaction, err := t.storage.GetTransaction(userID, transactionID)
 	if err != nil {
 		return nil, types.NewNotFound("transaction not found")
@@ -168,7 +168,7 @@ func (t TransactionHandler) GetTransaction(userID string, transactionID string) 
 }
 
 // updateTransaction updates the transaction status to completed after a delay to mock a background task
-func (t TransactionHandler) updateTransaction(transactionID string) {
+func (t *TransactionHandler) updateTransaction(transactionID string) {
 	go func() {
 		time.Sleep(200 * time.Millisecond)
 		if err := t.storage.UpdateTransaction(transactionID, "completed"); err != nil {

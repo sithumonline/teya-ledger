@@ -7,6 +7,8 @@ import (
 
 // CreateTransaction creates a new transaction
 func (m *MemoryStorage) CreateAccount(account Account) (*Account, error) {
+	m.accountsLock.Lock()
+	defer m.accountsLock.Unlock()
 	// Ideally should be handled by a unique constraint
 	for _, accountData := range m.accounts {
 		if account.UserID == account.UserID && accountData.Number == account.Number {
@@ -22,6 +24,8 @@ func (m *MemoryStorage) CreateAccount(account Account) (*Account, error) {
 }
 
 func (m *MemoryStorage) GetAccount(userID string, accountNumber string) (*Account, error) {
+	m.accountsLock.RLock()
+	defer m.accountsLock.RUnlock()
 	for _, account := range m.accounts {
 		if account.UserID == userID && account.Number == accountNumber {
 			return account, nil

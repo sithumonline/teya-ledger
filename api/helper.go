@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 
 	"github.com/alienxp03/teya-ledger/types"
@@ -12,7 +13,7 @@ func (a *APIImpl) respond(w http.ResponseWriter, status int, body any) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(status)
 	if err := json.NewEncoder(w).Encode(body); err != nil {
-		fmt.Printf("Could not encode JSON body: %s\n", err.Error())
+		a.l.Error("respond", slog.String("error", err.Error()))
 	}
 }
 

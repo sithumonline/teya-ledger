@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"log"
 	"log/slog"
@@ -25,6 +26,7 @@ func Start() {
 
 	addr := flag.String("addr", "0.0.0.0:8080", "HTTP network address")
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
+	slog.SetDefault(logger)
 
 	lis, err := net.Listen("tcp", *addr)
 	if err != nil {
@@ -44,10 +46,10 @@ func Start() {
 	storage := db.GetStorage()
 
 	transactioner := transaction.New(storage)
-	api_impl := api.New(transactioner)
+	apiImp := api.New(transactioner, logger)
 
 	srv := &http.Server{
-		Handler: api_impl,
+		Handler: apiImp,
 	}
 
 	go func() {
@@ -60,7 +62,7 @@ func Start() {
 
 	// Start the server
 	logger.Info("Ready to accept traffic", "address", *addr)
-	if err := srv.Serve(lis); err != nil && err != http.ErrServerClosed {
+	if err := srv.Serve(lis); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		logger.Error("Could not start server", "error", err)
 		os.Exit(1)
 	}

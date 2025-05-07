@@ -1,5 +1,7 @@
 package storage
 
+import "sync"
+
 type Storage interface {
 	CreateAccount(account Account) (*Account, error)
 	GetAccount(userID string, accountNumber string) (*Account, error)
@@ -17,9 +19,12 @@ type Storage interface {
 }
 
 type MemoryStorage struct {
-	accounts     []*Account
-	transactions []*Transaction
-	balances     []*Balance
+	accounts         []*Account
+	transactions     []*Transaction
+	balances         []*Balance
+	accountsLock     sync.RWMutex
+	transactionsLock sync.RWMutex
+	balancesLock     sync.RWMutex
 }
 
 func NewMemoryStorage() *MemoryStorage {

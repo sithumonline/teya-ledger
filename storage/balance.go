@@ -1,6 +1,8 @@
 package storage
 
 func (m *MemoryStorage) GetBalance(userID string, accountNumber string) (*Balance, error) {
+	m.balancesLock.RLock()
+	defer m.balancesLock.RUnlock()
 	for _, balance := range m.balances {
 		if balance.UserID == userID && balance.AccountNumber == accountNumber {
 			return balance, nil
@@ -19,6 +21,8 @@ func (m *MemoryStorage) GetBalance(userID string, accountNumber string) (*Balanc
 }
 
 func (m *MemoryStorage) UpdateBalance(userID string, accountNumber string, amount int64) error {
+	m.balancesLock.Lock()
+	defer m.balancesLock.Unlock()
 	balance, err := m.GetBalance(userID, accountNumber)
 	if err != nil {
 		return err
